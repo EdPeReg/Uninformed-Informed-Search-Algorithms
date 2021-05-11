@@ -191,27 +191,23 @@ void MainWindow::config_image()
     cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
     cv::threshold(gray_img, bin_img, 127, 255, cv::THRESH_BINARY);
 
-//    thinned = cv2.ximgproc.thinning(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY))
+    skel = cv::Mat(bin_img.size(), CV_8UC1, cv::Scalar(0));
+    cv::Mat temp;
+    cv::Mat eroded;
 
-//    cv::ximgproc::thinning(bin_img, skel);
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
 
-//    skel = cv::Mat(bin_img.size(), CV_8UC1, cv::Scalar(0));
-//    cv::Mat temp;
-//    cv::Mat eroded;
+    bool done;
+    do
+    {
+      cv::erode(bin_img, eroded, element);
+      cv::dilate(eroded, temp, element); // temp = open(bin_img)
+      cv::subtract(bin_img, temp, temp);
+      cv::bitwise_or(skel, temp, skel);
+      eroded.copyTo(bin_img);
 
-//    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-
-//    bool done;
-//    do
-//    {
-//      cv::erode(bin_img, eroded, element);
-//      cv::dilate(eroded, temp, element); // temp = open(bin_img)
-//      cv::subtract(bin_img, temp, temp);
-//      cv::bitwise_or(skel, temp, skel);
-//      eroded.copyTo(bin_img);
-
-//      done = (cv::countNonZero(bin_img) == 0);
-//    } while (!done);
+      done = (cv::countNonZero(bin_img) == 0);
+    } while (!done);
 
     cv::imshow("Original", img);
     ui->algorithm_output->clear();
