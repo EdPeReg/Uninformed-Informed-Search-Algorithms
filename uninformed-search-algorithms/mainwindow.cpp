@@ -176,7 +176,7 @@ void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
 /* @brief: Will config the image to its proper use. */
 void MainWindow::config_image()
 {
-    QDir dir("../../../images");
+    QDir dir("../images");
     qDebug() << dir.path();
     QString file_name = QFileDialog::getOpenFileName(this,
                                     tr("Open Image"),
@@ -191,28 +191,12 @@ void MainWindow::config_image()
     cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
     cv::threshold(gray_img, bin_img, 127, 255, cv::THRESH_BINARY);
 
-    skel = cv::Mat(bin_img.size(), CV_8UC1, cv::Scalar(0));
-    cv::Mat temp;
-    cv::Mat eroded;
-
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-
-    bool done;
-    do
-    {
-      cv::erode(bin_img, eroded, element);
-      cv::dilate(eroded, temp, element); // temp = open(bin_img)
-      cv::subtract(bin_img, temp, temp);
-      cv::bitwise_or(skel, temp, skel);
-      eroded.copyTo(bin_img);
-
-      done = (cv::countNonZero(bin_img) == 0);
-    } while (!done);
-
-    cv::imshow("Original", img);
+    // Apply skeletonizing.
+    cv::ximgproc::thinning(bin_img, skel);
+    cv::imshow("Original", skel);
     ui->algorithm_output->clear();
 
-    auxPoint.img = img;
+    auxPoint.img = skel;
     cv::setMouseCallback("Original", click_event, &auxPoint);
     cv::waitKey(1);
 }
