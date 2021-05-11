@@ -1,2 +1,0 @@
-Build-uninformed-search-algorithms-desktop-qt-5.15.12-gcc-64bit
-
