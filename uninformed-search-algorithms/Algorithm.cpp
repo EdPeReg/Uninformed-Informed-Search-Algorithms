@@ -1,9 +1,11 @@
 #include "Algorithm.h"
 
+#include <ctime>
+
 Algorithm::Algorithm() :
     path {nullptr}
 {
-
+    srand(time(0));
 }
 
 size_t Algorithm::get_nodes_expanded() const
@@ -125,7 +127,20 @@ void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &
             if(visited.find(state->_point) == visited.end() and !out_bounds(state->_point) and is_white(state->_point))
             {
                 my_deque.push_back(std::move(state));
+//                cv::Point start(state->_point);
+//                cv::Point end(state->_point);
+//                cv::imshow("Solved", img);
+//                cv::line(img, start, end, cv::Scalar(10, 255, 127), 2);
+//                cv::waitKey(1);
                 visited.insert(state->_point);
+                // To avoid copy.
+//                cv::Vec3b& color = img.at<cv::Vec3b>(state->_point);
+//                color[0] = rand() % 255;
+//                color[1] = rand() % 255;
+//                color[2] = rand() % 255;
+//                cv::imshow("Original", img);
+//                cv::waitKey(1);
+//                img.at<cv::Vec3b>(state->_point.x, state->_point.y) = 150;
             }
         }
     }
@@ -246,7 +261,7 @@ void Algorithm::draw_path()
     {
         cv::Point start(path->_point);
         cv::Point end(path->_point);
-        cv::imshow("Solved", img);
+        cv::imshow("Original", img);
         cv::line(img, start, end, cv::Scalar(10, 255, 127), 2);
         cv::waitKey(1);
 

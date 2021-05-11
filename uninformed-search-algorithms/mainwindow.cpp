@@ -3,13 +3,14 @@
 
 #include <opencv2/ximgproc.hpp>
 
-/* @brief: Aux structure to get (x,y) from opencv image window. */
-struct AuxPoint
+/// Aux structure to get image info.
+struct WindowInfo
 {
     cv::Mat img;
     int x = 0;
     int y = 0;
-} auxPoint;
+    int pressed = 0;
+} windowInfo;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -127,6 +128,8 @@ void MainWindow::process_algorithm()
 
     }
 
+    windowInfo.pressed = 0;
+
     ui->dest_x->clear();
     ui->dest_y->clear();
     ui->source_x->clear();
@@ -138,46 +141,41 @@ void MainWindow::process_algorithm()
     alg_turn[2] = false;
 }
 
-/* @brief: Mouse click event from the mouse, given by opencv to get the event and (x,y).
- * @param event: The event from the mouse.
- * @param x: x coordinate.
- * @param y: x coordinate.
- * @param auxStruct: Auxiliar struct used to get the (x,y) coordinates. */
+/** @brief Mouse click event from the mouse, given by opencv to get the image info.
+ * @param even: The event from the mouse.
+ * @param x x coordinate.
+ * @param y y coordinate.
+ * @param auxStruct Auxiliar struct used to get the window image info.
+ */
 void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
 {
-    AuxPoint *point_data = ((AuxPoint*) auxStruct);
+    WindowInfo *point_data = ((WindowInfo*) auxStruct);
     if(event == cv::EVENT_LBUTTONDOWN)
     {
         // Set (x,y) and draw a circle.
-        point_data->x = x;
-        point_data->y = y;
-        cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
-        cv::imshow("Original", point_data->img);
-    }
-
-    // FOR ZOOM.
-    if(event == cv::EVENT_LBUTTONDBLCLK)
-    {
-/*        cv::pyrUp(point_data->img, point_data->img,
-                  cv::Size(point_data->img.cols * 2,
-                           point_data->img.rows * 2));
-        cv::imshow("Original", point_data->img);
-        qDebug() << "doble"*/;
-    }
-    if(event == cv::EVENT_RBUTTONDBLCLK)
-    {
-/*        cv::pyrDown(point_data->img, point_data->img,
-                  cv::Size(point_data->img.cols / 2,
-                           point_data->img.rows / 2));
-        cv::imshow("Original", point_data->img)*/;
+        if(point_data->pressed == 0)
+        {
+            point_data->x = x;
+            point_data->y = y;
+            point_data->pressed++;
+            cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
+            cv::imshow("Original", point_data->img);
+        }
+        else if(point_data->pressed == 1)
+        {
+            point_data->x = x;
+            point_data->y = y;
+            point_data->pressed++;
+            cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
+            cv::imshow("Original", point_data->img);
+        }
     }
 }
 
-/* @brief: Will config the image to its proper use. */
+/// Will config the image to its proper use.
 void MainWindow::config_image()
 {
     QDir dir("../images");
-    qDebug() << dir.path();
     QString file_name = QFileDialog::getOpenFileName(this,
                                     tr("Open Image"),
                                     dir.path(),
@@ -193,22 +191,22 @@ void MainWindow::config_image()
 
     // Apply skeletonizing.
     cv::ximgproc::thinning(bin_img, skel);
-    cv::imshow("Original", skel);
+    cv::imshow("Original", img);
     ui->algorithm_output->clear();
 
-    auxPoint.img = skel;
-    cv::setMouseCallback("Original", click_event, &auxPoint);
+    windowInfo.img = img;
+    cv::setMouseCallback("Original", click_event, &windowInfo);
     cv::waitKey(1);
 }
 
 void MainWindow::on_set_source_clicked()
 {
-    ui->source_x->setText(QString::number(auxPoint.x));
-    ui->source_y->setText(QString::number(auxPoint.y));
+    ui->source_x->setText(QString::number(windowInfo.x));
+    ui->source_y->setText(QString::number(windowInfo.y));
 }
 
 void MainWindow::on_set_dest_clicked()
 {
-    ui->dest_x->setText(QString::number(auxPoint.x));
-    ui->dest_y->setText(QString::number(auxPoint.y));
+    ui->dest_x->setText(QString::number(windowInfo.x));
+    ui->dest_y->setText(QString::number(windowInfo.y));
 }
