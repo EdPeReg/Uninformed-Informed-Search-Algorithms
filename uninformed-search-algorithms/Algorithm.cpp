@@ -1,4 +1,5 @@
 #include "Algorithm.h"
+#include <iostream>
 
 #include <ctime>
 
@@ -30,10 +31,10 @@ Algorithm::~Algorithm()
  * @param img Normal Img to be draw.
  * @param bin_img Binary Image to be analized.
  */
-Algorithm::Algorithm(const cv::Mat& img, const cv::Mat &bin_img)
+Algorithm::Algorithm(cv::Mat& img, cv::Mat &bin_img)
 {
-    this->img = img;
-    this->bin_img = bin_img;
+    this->img = img.clone();
+    this->bin_img = bin_img.clone();
 }
 
 /** @brief Check the point is white or not.
@@ -44,12 +45,10 @@ bool Algorithm::is_white(const cv::Point& point)
 {
     if(!out_bounds(point))
     {
-        // Get RGB from this pixel, (255,255,255) = white.
-        cv::Vec3b color = bin_img.at<uchar>(cv::Point2i(point.x, point.y));
-        if(color.val[0] == 255 or color.val[1] == 255 or color.val[2] == 255)
+        // One channel, values from 0-255.
+        int color = (int)(bin_img.at<uchar>(cv::Point(point)));
+        if(color == 255)
             return true;
-
-        // cv::Vec3b color = bin_img.at<cv::Vec3b>(cv::Point(point.first, point.second));
     }
 
     return false;
@@ -69,14 +68,21 @@ bool Algorithm::out_bounds(const cv::Point& point)
     return false;
 }
 
-/** @brief Will apply the corresponding move to the state.
+/** @brief Will apply eight-connectivity.
  * @param state Current state to move.
  * @returns Adjacents from the state point.
 */
 std::deque<cv::Point> Algorithm::get_adjacents(cv::Point state)
 {
     // x - 1 -> left, x + 1 -> righ, y + 1 -> down, y - 1 -> up
-    return { {state.x - 1, state.y}, {state.x + 1, state.y}, {state.x, state.y + 1}, {state.x, state.y - 1} };
+    // x + 1, y - 1 -> top right corner.
+    // x - 1, y - 1 -> top left corner.
+    // x + 1, y + 1 -> bottom right corner.
+    // x - 1, y + 1 -> bottom left corner.
+    return { {state.x - 1, state.y}, {state.x + 1, state.y},
+             {state.x, state.y + 1}, {state.x, state.y - 1},
+             {state.x + 1, state.y - 1}, {state.x - 1, state.y - 1},
+             {state.x + 1, state.y + 1}, {state.x -1, state.y + 1} };
 }
 
 /** @brief: Will expand the current node, generating the next nodes.
@@ -127,11 +133,6 @@ void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &
             if(visited.find(state->_point) == visited.end() and !out_bounds(state->_point) and is_white(state->_point))
             {
                 my_deque.push_back(std::move(state));
-//                cv::Point start(state->_point);
-//                cv::Point end(state->_point);
-//                cv::imshow("Solved", img);
-//                cv::line(img, start, end, cv::Scalar(10, 255, 127), 2);
-//                cv::waitKey(1);
                 visited.insert(state->_point);
                 // To avoid copy.
 //                cv::Vec3b& color = img.at<cv::Vec3b>(state->_point);

@@ -43,7 +43,7 @@ class Algorithm
 {
 public:
     Algorithm();
-    Algorithm(const cv::Mat& img, const cv::Mat& bin_img);
+    Algorithm(cv::Mat& img, cv::Mat& bin_img);
 
     void breadth_first_search(cv::Point& initial_state, const cv::Point& final_state);
     void depth_first_search(cv::Point& initial_state, const cv::Point& final_state);
