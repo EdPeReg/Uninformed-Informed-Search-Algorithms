@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <ctime>
+#include <cmath>
 
 Algorithm::Algorithm() :
     path {nullptr}
@@ -67,6 +68,28 @@ bool Algorithm::out_bounds(const cv::Point& point)
     }
     return false;
 }
+
+cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
+{
+    std::vector<cv::Point> white_pixels;
+    std::vector<cv::Point> distances;
+    double max_dist = DBL_MAX;
+    cv::Point min_point;
+
+    cv::findNonZero(bin_img, white_pixels);
+    for(auto& pixel_white : white_pixels)
+    {
+        double distance = cv::norm(pixel_white - point);
+        if(distance < max_dist)
+        {
+            max_dist = distance;
+            min_point = pixel_white;
+        }
+    }
+
+    return min_point;
+}
+
 
 /** @brief Will apply eight-connectivity.
  * @param state Current state to move.

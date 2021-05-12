@@ -54,6 +54,7 @@ public:
     void draw_path();
     size_t get_nodes_expanded() const;
     size_t get_level() const;
+    cv::Point nearest_white_pixel(cv::Point& point);
 
     ~Algorithm();
 

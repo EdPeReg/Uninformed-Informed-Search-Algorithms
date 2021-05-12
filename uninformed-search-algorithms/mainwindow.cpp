@@ -63,16 +63,24 @@ void MainWindow::process_algorithm()
     QString aux_y = ui->source_y->text();
 
     // Get source and destination.
-//    cv::Point initial_state(1,3);
-    cv::Point initial_state(189, 508);
-//    cv::Point initial_state(aux_x.toInt(), aux_y.toInt());
+    cv::Point initial_state(aux_x.toInt(), aux_y.toInt());
     aux_x = ui->dest_x->text();
     aux_y = ui->dest_y->text();
-//    cv::Point final_state(aux_x.toInt(), aux_y.toInt());
-    cv::Point final_state(1311, 571);
-//    cv::Point final_state(4,3);
+    cv::Point final_state(aux_x.toInt(), aux_y.toInt());
+
+    // Convert to gray and binary.
+    cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
+    cv::threshold(gray_img, bin_img, 100, 255, cv::THRESH_BINARY);
+
+    // Apply skeletonizing and thinning.
+    cv::ximgproc::thinning(bin_img, skel);
 
     Algorithm algorithm(img, skel);
+    // Center white point to its corresponding place.
+    cv::Point min_white_point = algorithm.nearest_white_pixel(initial_state);
+    initial_state = min_white_point;
+    min_white_point = algorithm.nearest_white_pixel(final_state);
+    final_state = min_white_point;
 
     // bfs.
     if(alg_turn[0] == true)
@@ -131,7 +139,6 @@ void MainWindow::process_algorithm()
         } else {
             QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
         }
-
     }
 
     windowInfo.pressed = 0;
@@ -165,7 +172,7 @@ void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
             point_data->y = y;
             point_data->pressed++;
             cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
-            cv::imshow("Original", point_data->img);
+            cv::imshow("MAZE", point_data->img);
         }
         else if(point_data->pressed == 1)
         {
@@ -173,7 +180,7 @@ void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
             point_data->y = y;
             point_data->pressed++;
             cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
-            cv::imshow("Original", point_data->img);
+            cv::imshow("MAZE", point_data->img);
         }
     }
 }
@@ -191,61 +198,11 @@ void MainWindow::config_image()
     if(img.empty())
         QMessageBox::critical(this, tr("ERROR"), tr("ERROR OPENING IMAGE, TRY AGAIN"));
 
-    // Convert to gray and binary.
-    cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
-    cv::threshold(gray_img, bin_img, 100, 255, cv::THRESH_BINARY);
-
-    // Find contours.
-//    std::vector< std::vector<cv::Point> > contours;
-//    cv::findContours(bin_img, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-//    cv::Mat draw;
-//    draw = cv::Mat::zeros(img.size(), CV_32FC1);
-//    cv::drawContours(draw, contours, 0, cv::Scalar(255), -1);
-
-//    cv::threshold(draw, bin_img, 240, 250, cv::THRESH_BINARY);
-////    cv::imshow("CONTOURS", bin_img);
-////    cv::waitKey(1);
-
-//    // Dilate.
-//    cv::Mat dilated, eroded;
-//    cv::Mat kernel = cv::Mat::ones(19, 19, CV_8UC1);
-
-//    cv::dilate(bin_img, dilated, kernel, cv::Point(-1, -1), 1);
-////    cv::imshow("DILATED", dilated);
-////    cv::waitKey(1);
-
-//    // Eroding
-//    cv::erode(dilated, eroded, kernel, cv::Point(-1, -1), 1);
-////    cv::imshow("ERODE", eroded);
-////    cv::waitKey(1);
-
-//    // Difference.
-//    cv::Mat diff;
-//    cv::absdiff(dilated, eroded, diff);
-//    diff.convertTo(diff, CV_8UC1);
-//    cv::threshold(diff, diff, 240, 250, cv::THRESH_BINARY);
-
-//    bin_img = diff.clone();
-//    cv::imshow("DIFF", bin_img);
-//    cv::imshow("Original", img);
-
-
-    // Apply skeletonizing and thinning.
-    cv::ximgproc::thinning(bin_img, skel);
-
-    //Blur the image with 3x3 Gaussian kernel
-    cv::imshow("skel", skel);
-
-    ui->algorithm_output->clear();
+    cv::imshow("MAZE", img);
 
     windowInfo.img = img;
-    cv::setMouseCallback("Original", click_event, &windowInfo);
-//    cv::imshow("Original", img);
-//    char s = cv::waitKey(0);
-//    if(s == 's'){
-//        cv::imwrite("../images/mazes/skel_other.png", skel);
-//    }
-    cv::waitKey(1);
+    cv::setMouseCallback("MAZE", click_event, &windowInfo);
+    ui->algorithm_output->clear();
 }
 
 void MainWindow::on_set_source_clicked()
