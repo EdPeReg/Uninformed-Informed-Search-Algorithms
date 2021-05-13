@@ -34,6 +34,7 @@ private slots:
     void action_bfs();
     void action_dfs();
     void action_ids();
+    void action_best_fs();
     void process_algorithm();
     void on_set_source_clicked();
     void on_set_dest_clicked();
@@ -43,9 +44,10 @@ private:
     cv::Mat img, gray_img, bin_img, skel;
 
     QImage image;
-    bool alg_turn[3]; // Set which algorithm is running.
+    bool alg_turn[4]; // Set which algorithm is running.
 
     static void click_event(int event, int x, int y, int, void*);
     void config_image();
+    void print_alg_info(size_t level, size_t nodes_expanded, const std::chrono::nanoseconds& diff);
 };
 #endif // MAINWINDOW_H

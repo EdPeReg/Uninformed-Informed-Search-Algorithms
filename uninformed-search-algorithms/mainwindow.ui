@@ -98,13 +98,20 @@
    </property>
    <widget class="QMenu" name="menuFiles">
     <property name="title">
-     <string>Algorithms</string>
+     <string>Uninformed</string>
     </property>
     <addaction name="actionBreadth_first_search"/>
     <addaction name="actionDepth_first_searc"/>
     <addaction name="actionIterative_deepening_search"/>
    </widget>
+   <widget class="QMenu" name="menuInformed">
+    <property name="title">
+     <string>Informed</string>
+    </property>
+    <addaction name="actionBest_first_search"/>
+   </widget>
    <addaction name="menuFiles"/>
+   <addaction name="menuInformed"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionBreadth_first_search">
@@ -120,6 +127,11 @@
   <action name="actionIterative_deepening_search">
    <property name="text">
     <string>Iterative Deepening Search</string>
+   </property>
+  </action>
+  <action name="actionBest_first_search">
+   <property name="text">
+    <string>Best first search</string>
    </property>
   </action>
  </widget>

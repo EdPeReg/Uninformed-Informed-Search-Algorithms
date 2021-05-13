@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionBreadth_first_search, &QAction::triggered, this, &MainWindow::action_bfs);
     connect(ui->actionDepth_first_searc, &QAction::triggered, this, &MainWindow::action_dfs);
     connect(ui->actionIterative_deepening_search, &QAction::triggered, this, &MainWindow::action_ids);
+    connect(ui->actionBest_first_search, &QAction::triggered, this, &MainWindow::action_best_fs);
     connect(ui->btn_process, &QPushButton::clicked, this, &MainWindow::process_algorithm);
 }
 
@@ -57,10 +58,17 @@ void MainWindow::action_ids()
     alg_turn[2] = true;
 }
 
+void MainWindow::action_best_fs()
+{
+    config_image();
+    alg_turn[3] = true;
+}
+
 void MainWindow::process_algorithm()
 {
     QString aux_x = ui->source_x->text();
     QString aux_y = ui->source_y->text();
+    std::chrono::nanoseconds diff;
 
     // Get source and destination.
     cv::Point initial_state(aux_x.toInt(), aux_y.toInt());
@@ -88,15 +96,11 @@ void MainWindow::process_algorithm()
         auto start = std::chrono::steady_clock::now();
         algorithm.breadth_first_search(initial_state, final_state);
         auto end = std::chrono::steady_clock::now();
-        auto diff = end - start;
+        diff = end - start;
 
         if(algorithm.path_exist())
         {
-            ui->algorithm_output->append("Max search depth: " + QString::number(algorithm.get_level()));
-            ui->algorithm_output->append("Nodes expanded: " + QString::number(algorithm.get_nodes_expanded()));
-            ui->algorithm_output->append("Time: " +
-                             QString::number(std::chrono::duration<double, std::milli>(diff).count()) +
-                             " ms");
+            print_alg_info(algorithm.get_level(), algorithm.get_nodes_expanded(), diff);
             algorithm.draw_path();
         } else {
             QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
@@ -107,15 +111,11 @@ void MainWindow::process_algorithm()
         auto start = std::chrono::steady_clock::now();
         algorithm.depth_first_search(initial_state, final_state);
         auto end = std::chrono::steady_clock::now();
-        auto diff = end - start;
+        diff = end - start;
 
         if(algorithm.path_exist())
         {
-            ui->algorithm_output->append("Max search depth: " + QString::number(algorithm.get_level()));
-            ui->algorithm_output->append("Nodes expanded: " + QString::number(algorithm.get_nodes_expanded()));
-            ui->algorithm_output->append("Time: " +
-                             QString::number(std::chrono::duration<double, std::milli>(diff).count()) +
-                             " ms");
+            print_alg_info(algorithm.get_level(), algorithm.get_nodes_expanded(), diff);
             algorithm.draw_path();
         } else {
             QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
@@ -126,15 +126,26 @@ void MainWindow::process_algorithm()
         auto start = std::chrono::steady_clock::now();
         algorithm.iterative_deepening_search(initial_state, final_state, INT_MAX);
         auto end = std::chrono::steady_clock::now();
-        auto diff = end - start;
+        diff = end - start;
 
         if(algorithm.path_exist())
         {
-            ui->algorithm_output->append("Max search depth: " + QString::number(algorithm.get_level()));
-            ui->algorithm_output->append("Nodes expanded: " + QString::number(algorithm.get_nodes_expanded()));
-            ui->algorithm_output->append("Time: " +
-                             QString::number(std::chrono::duration<double, std::milli>(diff).count()) +
-                             " ms");
+            print_alg_info(algorithm.get_level(), algorithm.get_nodes_expanded(), diff);
+            algorithm.draw_path();
+        } else {
+            QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
+        }
+    }
+    // best first search.
+    else if(alg_turn[3] == true) {
+        auto start = std::chrono::steady_clock::now();
+        algorithm.best_first_search(initial_state, final_state);
+        auto end = std::chrono::steady_clock::now();
+        diff = end - start;
+
+        if(algorithm.path_exist())
+        {
+            print_alg_info(algorithm.get_level(), algorithm.get_nodes_expanded(), diff);
             algorithm.draw_path();
         } else {
             QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
@@ -152,6 +163,7 @@ void MainWindow::process_algorithm()
     alg_turn[0] = false;
     alg_turn[1] = false;
     alg_turn[2] = false;
+    alg_turn[3] = false;
 }
 
 /** @brief Mouse click event from the mouse, given by opencv to get the image info.
@@ -203,6 +215,20 @@ void MainWindow::config_image()
     windowInfo.img = img;
     cv::setMouseCallback("MAZE", click_event, &windowInfo);
     ui->algorithm_output->clear();
+}
+
+/** @brief Print algorithm result.
+ *  @param level The max depth level where the final state was found.
+ *  @param nodes_expanded The total number of nodes expanded while the algorithm was running.
+ *  @param diff Difference when the program started and when it finished.
+ *  */
+void MainWindow::print_alg_info(size_t level, size_t nodes_expanded, const std::chrono::nanoseconds &diff)
+{
+    ui->algorithm_output->append("Max search depth: " + QString::number(level));
+    ui->algorithm_output->append("Nodes expanded: " + QString::number(nodes_expanded));
+    ui->algorithm_output->append("Time: " +
+                     QString::number(std::chrono::duration<double, std::milli>(diff).count()) +
+                     " ms");
 }
 
 void MainWindow::on_set_source_clicked()
