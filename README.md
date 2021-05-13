@@ -3,16 +3,16 @@
 
 Some common algorithms apply it to images using opencv + QT.
 
-# Uninformed-Search-Algorithms
-- Breadth first search.
-- Depth first search.
-- Deepening depth first search.
-
 Shows the path from point A to point B, with some little information. With obstacles.
 ![image](https://user-images.githubusercontent.com/30558331/117749799-fb789200-b1d7-11eb-8cee-167e8b59cee9.png)
 
 Using a maze <br>
 ![image](https://user-images.githubusercontent.com/30558331/117750028-5ad6a200-b1d8-11eb-8c39-abac24c364e6.png)
+
+# Uninformed-Search-Algorithms
+- Breadth first search.
+- Depth first search.
+- Deepening depth first search.
 
 # Informed-Search-Algorithms
 - Best first search.
