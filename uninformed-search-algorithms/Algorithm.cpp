@@ -1,12 +1,9 @@
 #include "Algorithm.h"
-#include <iostream>
 
-#include <ctime>
 
 Algorithm::Algorithm() :
     path {nullptr}
 {
-    srand(time(0));
 }
 
 size_t Algorithm::get_nodes_expanded() const
@@ -124,13 +121,17 @@ std::deque<Node *> Algorithm::expand_node(Node *current_state)
     return adjacents;
 }
 
+double Algorithm::heuristic(cv::Point start, cv::Point end)
+{
+    return abs(end.x - start.x) + abs(end.y - start.y);
+}
+
 /** @brief Algorithm to generate a path.
- * @param initial_state Initial state.
+ * @param initial_state Initial state to start.
  * @param final_state The goal to reach.
  */
 void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &final_state)
 {
-    path = nullptr;
     Node *root = new Node(initial_state, nullptr, 0);
     std::deque<Node *> my_deque;
     std::set< cv::Point, comparePoints > visited;
@@ -159,26 +160,17 @@ void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &
             {
                 my_deque.push_back(std::move(state));
                 visited.insert(state->_point);
-                // To avoid copy.
-//                cv::Vec3b& color = img.at<cv::Vec3b>(state->_point);
-//                color[0] = rand() % 255;
-//                color[1] = rand() % 255;
-//                color[2] = rand() % 255;
-//                cv::imshow("Original", img);
-//                cv::waitKey(1);
-//                img.at<cv::Vec3b>(state->_point.x, state->_point.y) = 150;
             }
         }
     }
 }
 
 /** @brief Algorithm to generate a path.
- * @param initial_state Initial state.
+ * @param initial_state Initial state to start.
  * @param final_state The goal to reach.
  */
 void Algorithm::depth_first_search(cv::Point& initial_state, const cv::Point& final_state)
 {
-    path = nullptr;
     Node *root = new Node(initial_state, nullptr, 0);
     all_nodes.push_back(root);
     std::stack<Node *> my_stack;
@@ -250,14 +242,8 @@ bool Algorithm::depth_limited_search(Node* current_state, const cv::Point& final
     return false;
 }
 
-// Greedy search, primero el mejor.
-void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &final_state)
-{
-    std::priority_queue<int> pq;
-}
-
 /** @brief Algorithm to generate the moves to follow to solve the game.
- * @param current_state Initial state.
+ * @param initial_state Initial state to start.
  * @param final_state The goal to reach.
  * @param max_depth The depth limit to search.
  */
@@ -276,6 +262,54 @@ void Algorithm::iterative_deepening_search(cv::Point& initial_state, const cv::P
         if(depth_limited_search(current_state, final_state, visited, depth))
         {
             return;
+        }
+    }
+}
+
+/** @brief Algorithm to find the shortest path using heuristic. (primero el mejor, Greedy Best-First Search).
+  * @param current_state Initial state.
+  * @param final_state The goal to reach.
+  * */
+void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &final_state)
+{
+    double distance = 0.0;
+    Node *root = new Node(initial_state, nullptr, 0);
+    typedef std::pair<Node*, double> pair_node_dist;
+
+    // Our root has distance 0.
+    pair_node_dist node_dist(root, 0);
+    // Create a min heap.
+    std::priority_queue< pair_node_dist,
+                         std::vector<pair_node_dist>,
+                         CompareDistance > min_heap;
+
+    std::set< cv::Point, comparePoints > visited;
+    all_nodes.push_back(root);
+    min_heap.push(node_dist);
+
+    while(!min_heap.empty())
+    {
+        pair_node_dist current_state = min_heap.top();
+        min_heap.pop();
+        visited.insert(current_state.first->_point);
+
+        if(current_state.first->_point == final_state) {
+            path = current_state.first;
+            break;
+        }
+
+        std::deque<Node *> possible_states = expand_node(current_state.first);
+        all_nodes.insert(all_nodes.end(), possible_states.begin(), possible_states.end());
+        for(const auto& state : possible_states)
+        {
+            // If the state hasn't been visited yet.
+            if(visited.find(state->_point) == visited.end() and !out_bounds(state->_point) and is_white(state->_point))
+            {
+                // Manhattan distance between start and end.
+                distance = heuristic(state->_point, final_state);
+                min_heap.push(pair_node_dist(std::move(state), distance));
+                visited.insert(state->_point);
+            }
         }
     }
 }

@@ -3,24 +3,16 @@
 
 #include <stack>
 #include <deque>
+#include <functional>
 #include <queue>
 #include <set>
+#include <cmath>
 
 #include <QDebug>
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-
-/// Helper struct to compare properly a set of points.
-struct comparePoints {
-    bool operator()(const cv::Point & a, const cv::Point & b) {
-        if (a.x < b.x) return true;
-        if (a.x > b.x) return false;
-        if (a.y < b.y) return true;
-        return false;
-    }
-};
 
 struct Node
 {
@@ -38,6 +30,23 @@ struct Node
     Node(const Node &) = default;
     auto operator=(const Node &) -> Node & = default;
     ~Node() = default;
+};
+
+/// Helper struct to compare properly a set of points.
+struct comparePoints {
+    bool operator()(const cv::Point & a, const cv::Point & b) {
+        if (a.x < b.x) return true;
+        if (a.x > b.x) return false;
+        if (a.y < b.y) return true;
+        return false;
+    }
+};
+
+/// Used to create a min heap.
+struct CompareDistance {
+    constexpr bool operator()(std::pair<Node*, double> const & a,
+                              std::pair<Node*, double> const & b) const noexcept
+    { return a.second > b.second; }
 };
 
 class Algorithm
@@ -71,6 +80,7 @@ private:
     bool is_white(const cv::Point& point);
     std::deque<cv::Point> get_adjacents(cv::Point state);
     std::deque<Node *> expand_node(Node *current_state);
+    double heuristic(cv::Point start, cv::Point end);
 };
 
 #endif // ALGORITHM_H
