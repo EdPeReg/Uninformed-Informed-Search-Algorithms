@@ -1,8 +1,9 @@
 # WARNING.
 <b> There could be some nasty bugs, still in development. :) .Iterative deepening depth first search is not recomended to use (for now) because memory problems. Your RAM will be crazy, don't let it to go up to 90% .</b>
 
-# Uninformed-Search-Algorithms
 Some common algorithms apply it to images using opencv + QT.
+
+# Uninformed-Search-Algorithms
 - Breadth first search.
 - Depth first search.
 - Deepening depth first search.
@@ -13,6 +14,8 @@ Shows the path from point A to point B, with some little information. With obsta
 Using a maze <br>
 ![image](https://user-images.githubusercontent.com/30558331/117750028-5ad6a200-b1d8-11eb-8c39-abac24c364e6.png)
 
+# Informed-Search-Algorithms
+- Best first search.
 
 # How to use.
 The images should be black and white, you can use photoshop or any other software to convert it.
