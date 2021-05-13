@@ -1,9 +1,12 @@
 #include "Algorithm.h"
+#include <iostream>
+
+#include <ctime>
 
 Algorithm::Algorithm() :
     path {nullptr}
 {
-
+    srand(time(0));
 }
 
 size_t Algorithm::get_nodes_expanded() const
@@ -28,10 +31,10 @@ Algorithm::~Algorithm()
  * @param img Normal Img to be draw.
  * @param bin_img Binary Image to be analized.
  */
-Algorithm::Algorithm(const cv::Mat& img, const cv::Mat &bin_img)
+Algorithm::Algorithm(cv::Mat& img, cv::Mat &bin_img)
 {
-    this->img = img;
-    this->bin_img = bin_img;
+    this->img = img.clone();
+    this->bin_img = bin_img.clone();
 }
 
 /** @brief Check the point is white or not.
@@ -42,12 +45,10 @@ bool Algorithm::is_white(const cv::Point& point)
 {
     if(!out_bounds(point))
     {
-        // Get RGB from this pixel, (255,255,255) = white.
-        cv::Vec3b color = bin_img.at<uchar>(cv::Point2i(point.x, point.y));
-        if(color.val[0] == 255 or color.val[1] == 255 or color.val[2] == 255)
+        // One channel, values from 0-255.
+        int color = (int)(bin_img.at<uchar>(cv::Point(point)));
+        if(color == 255)
             return true;
-
-        // cv::Vec3b color = bin_img.at<cv::Vec3b>(cv::Point(point.first, point.second));
     }
 
     return false;
@@ -67,14 +68,46 @@ bool Algorithm::out_bounds(const cv::Point& point)
     return false;
 }
 
-/** @brief Will apply the corresponding move to the state.
+/** @brief Will search in all white pixels to get the nearest white pixel giben a ponit.
+ *  @param point Point to be compared, needed to get the min distance between white pixels and the point.
+ *  @returns Nearest point to the user's point.
+ *  */
+cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
+{
+    std::vector<cv::Point> white_pixels;
+    std::vector<cv::Point> distances;
+    double max_dist = DBL_MAX;
+    cv::Point min_point;
+
+    cv::findNonZero(bin_img, white_pixels); // Get all white pixels.
+    for(auto& pixel_white : white_pixels)
+    {
+        double distance = cv::norm(pixel_white - point); // Euclidian distance.
+        if(distance < max_dist)
+        {
+            max_dist = distance;
+            min_point = pixel_white;
+        }
+    }
+
+    return min_point;
+}
+
+/** @brief Will apply eight-connectivity.
  * @param state Current state to move.
  * @returns Adjacents from the state point.
 */
 std::deque<cv::Point> Algorithm::get_adjacents(cv::Point state)
 {
     // x - 1 -> left, x + 1 -> righ, y + 1 -> down, y - 1 -> up
-    return { {state.x - 1, state.y}, {state.x + 1, state.y}, {state.x, state.y + 1}, {state.x, state.y - 1} };
+    // x + 1, y - 1 -> top right corner.
+    // x - 1, y - 1 -> top left corner.
+    // x + 1, y + 1 -> bottom right corner.
+    // x - 1, y + 1 -> bottom left corner.
+    return { {state.x - 1, state.y}, {state.x + 1, state.y},
+             {state.x, state.y + 1}, {state.x, state.y - 1},
+             {state.x + 1, state.y - 1}, {state.x - 1, state.y - 1},
+             {state.x + 1, state.y + 1}, {state.x -1, state.y + 1} };
 }
 
 /** @brief: Will expand the current node, generating the next nodes.
@@ -126,6 +159,14 @@ void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &
             {
                 my_deque.push_back(std::move(state));
                 visited.insert(state->_point);
+                // To avoid copy.
+//                cv::Vec3b& color = img.at<cv::Vec3b>(state->_point);
+//                color[0] = rand() % 255;
+//                color[1] = rand() % 255;
+//                color[2] = rand() % 255;
+//                cv::imshow("Original", img);
+//                cv::waitKey(1);
+//                img.at<cv::Vec3b>(state->_point.x, state->_point.y) = 150;
             }
         }
     }
@@ -209,6 +250,12 @@ bool Algorithm::depth_limited_search(Node* current_state, const cv::Point& final
     return false;
 }
 
+// Greedy search, primero el mejor.
+void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &final_state)
+{
+    std::priority_queue<int> pq;
+}
+
 /** @brief Algorithm to generate the moves to follow to solve the game.
  * @param current_state Initial state.
  * @param final_state The goal to reach.
@@ -246,7 +293,7 @@ void Algorithm::draw_path()
     {
         cv::Point start(path->_point);
         cv::Point end(path->_point);
-        cv::imshow("Solved", img);
+        cv::imshow("Original", img);
         cv::line(img, start, end, cv::Scalar(10, 255, 127), 2);
         cv::waitKey(1);
 

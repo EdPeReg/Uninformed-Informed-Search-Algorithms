@@ -3,13 +3,16 @@
 
 #include <opencv2/ximgproc.hpp>
 
-/* @brief: Aux structure to get (x,y) from opencv image window. */
-struct AuxPoint
+#include <iostream>
+
+/// Aux structure to get image info.
+struct WindowInfo
 {
     cv::Mat img;
     int x = 0;
     int y = 0;
-} auxPoint;
+    int pressed = 0;
+} windowInfo;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -65,7 +68,19 @@ void MainWindow::process_algorithm()
     aux_y = ui->dest_y->text();
     cv::Point final_state(aux_x.toInt(), aux_y.toInt());
 
-    Algorithm algorithm(img, bin_img);
+    // Convert to gray and binary.
+    cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
+    cv::threshold(gray_img, bin_img, 100, 255, cv::THRESH_BINARY);
+
+    // Apply skeletonizing and thinning.
+    cv::ximgproc::thinning(bin_img, skel);
+
+    Algorithm algorithm(img, skel);
+    // Center white point to its corresponding place.
+    cv::Point min_white_point = algorithm.nearest_white_pixel(initial_state);
+    initial_state = min_white_point;
+    min_white_point = algorithm.nearest_white_pixel(final_state);
+    final_state = min_white_point;
 
     // bfs.
     if(alg_turn[0] == true)
@@ -124,8 +139,9 @@ void MainWindow::process_algorithm()
         } else {
             QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
         }
-
     }
+
+    windowInfo.pressed = 0;
 
     ui->dest_x->clear();
     ui->dest_y->clear();
@@ -138,46 +154,41 @@ void MainWindow::process_algorithm()
     alg_turn[2] = false;
 }
 
-/* @brief: Mouse click event from the mouse, given by opencv to get the event and (x,y).
- * @param event: The event from the mouse.
- * @param x: x coordinate.
- * @param y: x coordinate.
- * @param auxStruct: Auxiliar struct used to get the (x,y) coordinates. */
+/** @brief Mouse click event from the mouse, given by opencv to get the image info.
+ * @param even: The event from the mouse.
+ * @param x x coordinate.
+ * @param y y coordinate.
+ * @param auxStruct Auxiliar struct used to get the window image info.
+ */
 void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
 {
-    AuxPoint *point_data = ((AuxPoint*) auxStruct);
+    WindowInfo *point_data = ((WindowInfo*) auxStruct);
     if(event == cv::EVENT_LBUTTONDOWN)
     {
         // Set (x,y) and draw a circle.
-        point_data->x = x;
-        point_data->y = y;
-        cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
-        cv::imshow("Original", point_data->img);
-    }
-
-    // FOR ZOOM.
-    if(event == cv::EVENT_LBUTTONDBLCLK)
-    {
-/*        cv::pyrUp(point_data->img, point_data->img,
-                  cv::Size(point_data->img.cols * 2,
-                           point_data->img.rows * 2));
-        cv::imshow("Original", point_data->img);
-        qDebug() << "doble"*/;
-    }
-    if(event == cv::EVENT_RBUTTONDBLCLK)
-    {
-/*        cv::pyrDown(point_data->img, point_data->img,
-                  cv::Size(point_data->img.cols / 2,
-                           point_data->img.rows / 2));
-        cv::imshow("Original", point_data->img)*/;
+        if(point_data->pressed == 0)
+        {
+            point_data->x = x;
+            point_data->y = y;
+            point_data->pressed++;
+            cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
+            cv::imshow("MAZE", point_data->img);
+        }
+        else if(point_data->pressed == 1)
+        {
+            point_data->x = x;
+            point_data->y = y;
+            point_data->pressed++;
+            cv::circle(point_data->img, cv::Point(x,y), 2, cv::Scalar(200, 255, 100), cv::FILLED);
+            cv::imshow("MAZE", point_data->img);
+        }
     }
 }
 
-/* @brief: Will config the image to its proper use. */
+/// Will config the image to its proper use.
 void MainWindow::config_image()
 {
-    QDir dir("../../../images");
-    qDebug() << dir.path();
+    QDir dir("../images");
     QString file_name = QFileDialog::getOpenFileName(this,
                                     tr("Open Image"),
                                     dir.path(),
@@ -187,48 +198,21 @@ void MainWindow::config_image()
     if(img.empty())
         QMessageBox::critical(this, tr("ERROR"), tr("ERROR OPENING IMAGE, TRY AGAIN"));
 
-    // Convert to gray and binary.
-    cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
-    cv::threshold(gray_img, bin_img, 127, 255, cv::THRESH_BINARY);
+    cv::imshow("MAZE", img);
 
-//    thinned = cv2.ximgproc.thinning(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY))
-
-//    cv::ximgproc::thinning(bin_img, skel);
-
-//    skel = cv::Mat(bin_img.size(), CV_8UC1, cv::Scalar(0));
-//    cv::Mat temp;
-//    cv::Mat eroded;
-
-//    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-
-//    bool done;
-//    do
-//    {
-//      cv::erode(bin_img, eroded, element);
-//      cv::dilate(eroded, temp, element); // temp = open(bin_img)
-//      cv::subtract(bin_img, temp, temp);
-//      cv::bitwise_or(skel, temp, skel);
-//      eroded.copyTo(bin_img);
-
-//      done = (cv::countNonZero(bin_img) == 0);
-//    } while (!done);
-
-    cv::imshow("Original", img);
+    windowInfo.img = img;
+    cv::setMouseCallback("MAZE", click_event, &windowInfo);
     ui->algorithm_output->clear();
-
-    auxPoint.img = img;
-    cv::setMouseCallback("Original", click_event, &auxPoint);
-    cv::waitKey(1);
 }
 
 void MainWindow::on_set_source_clicked()
 {
-    ui->source_x->setText(QString::number(auxPoint.x));
-    ui->source_y->setText(QString::number(auxPoint.y));
+    ui->source_x->setText(QString::number(windowInfo.x));
+    ui->source_y->setText(QString::number(windowInfo.y));
 }
 
 void MainWindow::on_set_dest_clicked()
 {
-    ui->dest_x->setText(QString::number(auxPoint.x));
-    ui->dest_y->setText(QString::number(auxPoint.y));
+    ui->dest_x->setText(QString::number(windowInfo.x));
+    ui->dest_y->setText(QString::number(windowInfo.y));
 }

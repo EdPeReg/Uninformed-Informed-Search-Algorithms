@@ -3,6 +3,7 @@
 
 #include <stack>
 #include <deque>
+#include <queue>
 #include <set>
 
 #include <QDebug>
@@ -43,17 +44,19 @@ class Algorithm
 {
 public:
     Algorithm();
-    Algorithm(const cv::Mat& img, const cv::Mat& bin_img);
+    Algorithm(cv::Mat& img, cv::Mat& bin_img);
 
     void breadth_first_search(cv::Point& initial_state, const cv::Point& final_state);
     void depth_first_search(cv::Point& initial_state, const cv::Point& final_state);
     void iterative_deepening_search(cv::Point& initial_state, const cv::Point& final_state, size_t max_depth);
     bool depth_limited_search(Node* current_state, const cv::Point& final_state, std::set< cv::Point, comparePoints >& visited, size_t max_depth);
+    void best_first_search (cv::Point& initial_state, const cv::Point& final_state);
 
     bool path_exist();
     void draw_path();
     size_t get_nodes_expanded() const;
     size_t get_level() const;
+    cv::Point nearest_white_pixel(cv::Point& point);
 
     ~Algorithm();
 
