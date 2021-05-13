@@ -3,6 +3,7 @@
 
 #include <stack>
 #include <deque>
+#include <queue>
 #include <set>
 
 #include <QDebug>
@@ -49,6 +50,7 @@ public:
     void depth_first_search(cv::Point& initial_state, const cv::Point& final_state);
     void iterative_deepening_search(cv::Point& initial_state, const cv::Point& final_state, size_t max_depth);
     bool depth_limited_search(Node* current_state, const cv::Point& final_state, std::set< cv::Point, comparePoints >& visited, size_t max_depth);
+    void best_first_search (cv::Point& initial_state, const cv::Point& final_state);
 
     bool path_exist();
     void draw_path();

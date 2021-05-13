@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include <ctime>
-#include <cmath>
 
 Algorithm::Algorithm() :
     path {nullptr}
@@ -69,6 +68,10 @@ bool Algorithm::out_bounds(const cv::Point& point)
     return false;
 }
 
+/** @brief Will search in all white pixels to get the nearest white pixel giben a ponit.
+ *  @param point Point to be compared, needed to get the min distance between white pixels and the point.
+ *  @returns Nearest point to the user's point.
+ *  */
 cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
 {
     std::vector<cv::Point> white_pixels;
@@ -76,10 +79,10 @@ cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
     double max_dist = DBL_MAX;
     cv::Point min_point;
 
-    cv::findNonZero(bin_img, white_pixels);
+    cv::findNonZero(bin_img, white_pixels); // Get all white pixels.
     for(auto& pixel_white : white_pixels)
     {
-        double distance = cv::norm(pixel_white - point);
+        double distance = cv::norm(pixel_white - point); // Euclidian distance.
         if(distance < max_dist)
         {
             max_dist = distance;
@@ -89,7 +92,6 @@ cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
 
     return min_point;
 }
-
 
 /** @brief Will apply eight-connectivity.
  * @param state Current state to move.
@@ -246,6 +248,12 @@ bool Algorithm::depth_limited_search(Node* current_state, const cv::Point& final
     }
 
     return false;
+}
+
+// Greedy search, primero el mejor.
+void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &final_state)
+{
+    std::priority_queue<int> pq;
 }
 
 /** @brief Algorithm to generate the moves to follow to solve the game.
