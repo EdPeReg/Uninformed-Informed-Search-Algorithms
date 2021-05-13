@@ -45,6 +45,8 @@ private:
 
     QImage image;
     bool alg_turn[4]; // Set which algorithm is running.
+    bool mazes_pick;
+    bool figures_pick;
 
     static void click_event(int event, int x, int y, int, void*);
     void config_image();

@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , alg_turn {false}
+    , mazes_pick {false}
+    , figures_pick {false}
 {
     ui->setupUi(this);
 
@@ -80,18 +82,27 @@ void MainWindow::process_algorithm()
     cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
     cv::threshold(gray_img, bin_img, 100, 255, cv::THRESH_BINARY);
 
-    // Apply skeletonizing and thinning.
-    cv::ximgproc::thinning(bin_img, skel);
+    Algorithm algorithm;
+    cv::Point min_white_point;
+    // Apply skeletonizing and thinning only to mazes.
+    if(mazes_pick)
+    {
+        cv::ximgproc::thinning(bin_img, skel);
+        algorithm = Algorithm(img, skel);
 
-    Algorithm algorithm(img, skel);
-    // Center white point to its corresponding place.
-    cv::Point min_white_point = algorithm.nearest_white_pixel(initial_state);
-    initial_state = min_white_point;
-    min_white_point = algorithm.nearest_white_pixel(final_state);
-    final_state = min_white_point;
+        // Center white point to its corresponding place.
+        min_white_point = algorithm.nearest_white_pixel(initial_state);
+        initial_state = min_white_point;
+        min_white_point = algorithm.nearest_white_pixel(final_state);
+        final_state = min_white_point;
+    }
+    // Don't apply skeletonizing and thinning to images that aren't mazes.
+    else if(figures_pick) {
+        algorithm = Algorithm(img, bin_img);
+    }
 
     // bfs.
-    if(alg_turn[0] == true)
+    if(alg_turn[0])
     {
         auto start = std::chrono::steady_clock::now();
         algorithm.breadth_first_search(initial_state, final_state);
@@ -107,7 +118,7 @@ void MainWindow::process_algorithm()
         }
     }
     // dfs.
-    else if(alg_turn[1] == true) {
+    else if(alg_turn[1]) {
         auto start = std::chrono::steady_clock::now();
         algorithm.depth_first_search(initial_state, final_state);
         auto end = std::chrono::steady_clock::now();
@@ -122,7 +133,7 @@ void MainWindow::process_algorithm()
         }
     }
     // ids
-    else if(alg_turn[2] == true) {
+    else if(alg_turn[2]) {
         auto start = std::chrono::steady_clock::now();
         algorithm.iterative_deepening_search(initial_state, final_state, INT_MAX);
         auto end = std::chrono::steady_clock::now();
@@ -137,7 +148,7 @@ void MainWindow::process_algorithm()
         }
     }
     // best first search.
-    else if(alg_turn[3] == true) {
+    else if(alg_turn[3]) {
         auto start = std::chrono::steady_clock::now();
         algorithm.best_first_search(initial_state, final_state);
         auto end = std::chrono::steady_clock::now();
@@ -152,12 +163,15 @@ void MainWindow::process_algorithm()
         }
     }
 
+    // Reset values.
     windowInfo.pressed = 0;
-
     ui->dest_x->clear();
     ui->dest_y->clear();
     ui->source_x->clear();
     ui->source_y->clear();
+
+    figures_pick = false;
+    mazes_pick = false;
 
     // Reset turns.
     alg_turn[0] = false;
@@ -200,11 +214,33 @@ void MainWindow::click_event(int event, int x, int y, int, void * auxStruct)
 /// Will config the image to its proper use.
 void MainWindow::config_image()
 {
-    QDir dir("../images");
-    QString file_name = QFileDialog::getOpenFileName(this,
-                                    tr("Open Image"),
-                                    dir.path(),
-                                    tr("Image Files (*.png *.jpg *.bmp *.jpeg)"));
+    QDir dir_figures("../images/figures");
+    QDir dir_mazes("../images/mazes");
+    QString file_name;
+
+    QMessageBox::StandardButton question_pic;
+    question_pic = QMessageBox::question(this, tr("Choose an option"),
+                                         tr("What kind of problem you want to solve? YES(image wih obstacle), NO(maze)"),
+                                         QMessageBox::Yes | QMessageBox::No);
+
+    // Go directly to figures directory.
+    if(question_pic == QMessageBox::Yes)
+    {
+        figures_pick = true;
+        file_name = QFileDialog::getOpenFileName(this,
+                        tr("Open Image"),
+                        dir_figures.path(),
+                        tr("Image Files (*.png *.jpg *.bmp *.jpeg)"));
+    }
+    // Go directly to mazes directory.
+    else if(question_pic == QMessageBox::No)
+    {
+        mazes_pick = true;
+        file_name = QFileDialog::getOpenFileName(this,
+                         tr("Open Image"),
+                         dir_mazes.path(),
+                         tr("Image Files (*.png *.jpg *.bmp *.jpeg)"));
+    }
 
     img = cv::imread(file_name.toStdString(), cv::IMREAD_COLOR);
     if(img.empty())
