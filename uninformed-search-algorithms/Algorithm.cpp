@@ -24,20 +24,12 @@ Algorithm::~Algorithm()
     }
 }
 
-/** @brief Receives two images, one to analize and other to draw.
- * @param img Normal Img to be draw.
- * @param bin_img Binary Image to be analized.
- */
 Algorithm::Algorithm(cv::Mat& img, cv::Mat &bin_img)
 {
     this->img = img.clone();
     this->bin_img = bin_img.clone();
 }
 
-/** @brief Check the point is white or not.
- * @param point (x,y) point.
- * @returns True is black, false otherwise.
-*/
 bool Algorithm::is_white(const cv::Point& point)
 {
     if(!out_bounds(point))
@@ -51,10 +43,6 @@ bool Algorithm::is_white(const cv::Point& point)
     return false;
 }
 
-/** @brief Check the point is in the image bounds.
- * @param point (x,y) point.
- * @returns True is in the bounds, false otherwise.
- */
 bool Algorithm::out_bounds(const cv::Point& point)
 {
     if(point.x < 0 or point.y < 0 or
@@ -65,10 +53,6 @@ bool Algorithm::out_bounds(const cv::Point& point)
     return false;
 }
 
-/** @brief Will search in all white pixels to get the nearest white pixel giben a ponit.
- *  @param point Point to be compared, needed to get the min distance between white pixels and the point.
- *  @returns Nearest point to the user's point.
- *  */
 cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
 {
     std::vector<cv::Point> white_pixels;
@@ -90,10 +74,6 @@ cv::Point Algorithm::nearest_white_pixel(cv::Point& point)
     return min_point;
 }
 
-/** @brief Will apply eight-connectivity.
- * @param state Current state to move.
- * @returns Adjacents from the state point.
-*/
 std::deque<cv::Point> Algorithm::get_adjacents(cv::Point state)
 {
     // x - 1 -> left, x + 1 -> righ, y + 1 -> down, y - 1 -> up
@@ -107,9 +87,6 @@ std::deque<cv::Point> Algorithm::get_adjacents(cv::Point state)
              {state.x + 1, state.y + 1}, {state.x -1, state.y + 1} };
 }
 
-/** @brief: Will expand the current node, generating the next nodes.
- * @param current_state Current node that holds the current state.
- * @returns A deque of the expanded nodes based on current state. */
 std::deque<Node *> Algorithm::expand_node(Node *current_state)
 {
     ++nodes_expanded;
@@ -126,10 +103,16 @@ double Algorithm::heuristic(cv::Point start, cv::Point end)
     return abs(end.x - start.x) + abs(end.y - start.y);
 }
 
-/** @brief Algorithm to generate a path.
- * @param initial_state Initial state to start.
- * @param final_state The goal to reach.
- */
+double Algorithm::distance(cv::Point start, cv::Point end)
+{
+    double dstX = abs(start.x - end.x);
+    double dstY = abs(start.y - end.y);
+
+    if(dstX > dstY)
+        return 14 * dstY + 10 * (dstX - dstY);
+    return 14 * dstX + 10 * (dstY - dstX);
+}
+
 void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &final_state)
 {
     Node *root = new Node(initial_state, nullptr, 0);
@@ -165,10 +148,6 @@ void Algorithm::breadth_first_search(cv::Point &initial_state, const cv::Point &
     }
 }
 
-/** @brief Algorithm to generate a path.
- * @param initial_state Initial state to start.
- * @param final_state The goal to reach.
- */
 void Algorithm::depth_first_search(cv::Point& initial_state, const cv::Point& final_state)
 {
     Node *root = new Node(initial_state, nullptr, 0);
@@ -203,14 +182,6 @@ void Algorithm::depth_first_search(cv::Point& initial_state, const cv::Point& fi
     }
 }
 
-/** @brie: Used with iterative deeping search to check each level based on a max depth,
- * will check or expand the corresponding states.
- * @param current_state State to be expanded or checked.
- * @param final_state The goal to reach.
- * @param visited All the states that are already visited, to improve performance.
- * @param max_depth The depth limit to search.
- * @returns True if the final state is reached, otherwise false.
- */
 bool Algorithm::depth_limited_search(Node* current_state, const cv::Point& final_state, std::set< cv::Point, comparePoints >& visited, size_t max_depth)
 {
     if(current_state->_point == final_state) {
@@ -242,11 +213,6 @@ bool Algorithm::depth_limited_search(Node* current_state, const cv::Point& final
     return false;
 }
 
-/** @brief Algorithm to generate the moves to follow to solve the game.
- * @param initial_state Initial state to start.
- * @param final_state The goal to reach.
- * @param max_depth The depth limit to search.
- */
 void Algorithm::iterative_deepening_search(cv::Point& initial_state, const cv::Point& final_state, size_t max_depth)
 {
     path = nullptr;
@@ -266,13 +232,9 @@ void Algorithm::iterative_deepening_search(cv::Point& initial_state, const cv::P
     }
 }
 
-/** @brief Algorithm to find the shortest path using heuristic. (primero el mejor, Greedy Best-First Search).
-  * @param current_state Initial state.
-  * @param final_state The goal to reach.
-  * */
 void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &final_state)
 {
-    double distance = 0.0;
+    double distance = 0.0f;
     Node *root = new Node(initial_state, nullptr, 0);
     typedef std::pair<Node*, double> pair_node_dist;
 
@@ -314,13 +276,60 @@ void Algorithm::best_first_search(cv::Point &initial_state, const cv::Point &fin
     }
 }
 
-/// Check if path exist.
+void Algorithm::a_star_search(cv::Point &initial_state, const cv::Point &final_state)
+{
+    double total_distance = 0.0;
+    Node *root = new Node(initial_state, nullptr, 0);
+    typedef std::pair<Node*, double> pair_node_dist;
+
+    // Our root has distance 0.
+    pair_node_dist node_dist(root, 0);
+    // Create a min heap.
+    std::priority_queue< pair_node_dist,
+                         std::vector<pair_node_dist>,
+                         CompareDistance > min_heap;
+
+    std::set< cv::Point, comparePoints > visited;
+    all_nodes.push_back(root);
+    min_heap.push(node_dist);
+
+    while(!min_heap.empty())
+    {
+        pair_node_dist current_state = min_heap.top();
+        min_heap.pop();
+        visited.insert(current_state.first->_point);
+
+        if(current_state.first->_point == final_state) {
+            path = current_state.first;
+            break;
+        }
+
+        std::deque<Node *> possible_states = expand_node(current_state.first);
+        all_nodes.insert(all_nodes.end(), possible_states.begin(), possible_states.end());
+        for(auto& state : possible_states)
+        {
+            // If the state hasn't been visited yet.
+            if(visited.find(state->_point) == visited.end() and !out_bounds(state->_point) and is_white(state->_point))
+            {
+                double new_cost_neighbour = current_state.first->gCost + distance(current_state.first->_point, state->_point);
+                if(visited.find(state->_point) == visited.end() or new_cost_neighbour < state->gCost)
+                {
+                    state->gCost = new_cost_neighbour;
+                    state->hCost = heuristic(state->_point, final_state);
+                    total_distance = state->gCost + state->hCost;
+                    min_heap.push(pair_node_dist(std::move(state), total_distance));
+                    visited.insert(state->_point);
+                }
+            }
+        }
+    }
+}
+
 bool Algorithm::path_exist()
 {
     return path != nullptr ? true : false;
 }
 
-/// Draw path on the pic.
 void Algorithm::draw_path()
 {
     while(path->_parent != nullptr)

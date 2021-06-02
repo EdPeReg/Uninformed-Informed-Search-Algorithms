@@ -33,6 +33,7 @@ public:
     QAction *actionDepth_first_searc;
     QAction *actionIterative_deepening_search;
     QAction *actionBest_first_search;
+    QAction *actionA_search;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
     QGridLayout *gridLayout;
@@ -64,6 +65,8 @@ public:
         actionIterative_deepening_search->setObjectName(QString::fromUtf8("actionIterative_deepening_search"));
         actionBest_first_search = new QAction(MainWindow);
         actionBest_first_search->setObjectName(QString::fromUtf8("actionBest_first_search"));
+        actionA_search = new QAction(MainWindow);
+        actionA_search->setObjectName(QString::fromUtf8("actionA_search"));
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         verticalLayout = new QVBoxLayout(centralwidget);
@@ -142,6 +145,7 @@ public:
         menuFiles->addAction(actionDepth_first_searc);
         menuFiles->addAction(actionIterative_deepening_search);
         menuInformed->addAction(actionBest_first_search);
+        menuInformed->addAction(actionA_search);
 
         retranslateUi(MainWindow);
 
@@ -155,6 +159,7 @@ public:
         actionDepth_first_searc->setText(QCoreApplication::translate("MainWindow", "Depth first search", nullptr));
         actionIterative_deepening_search->setText(QCoreApplication::translate("MainWindow", "Iterative Deepening Search", nullptr));
         actionBest_first_search->setText(QCoreApplication::translate("MainWindow", "Best first search", nullptr));
+        actionA_search->setText(QCoreApplication::translate("MainWindow", "A * search", nullptr));
         label_2->setText(QCoreApplication::translate("MainWindow", "End (x,y)", nullptr));
         dest_x->setText(QString());
         label->setText(QCoreApplication::translate("MainWindow", "Start (x,y)", nullptr));

@@ -109,6 +109,7 @@
      <string>Informed</string>
     </property>
     <addaction name="actionBest_first_search"/>
+    <addaction name="actionA_search"/>
    </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuInformed"/>
@@ -132,6 +133,11 @@
   <action name="actionBest_first_search">
    <property name="text">
     <string>Best first search</string>
+   </property>
+  </action>
+  <action name="actionA_search">
+   <property name="text">
+    <string>A * search</string>
    </property>
   </action>
  </widget>

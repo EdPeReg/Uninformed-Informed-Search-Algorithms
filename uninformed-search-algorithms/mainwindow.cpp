@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionDepth_first_searc, &QAction::triggered, this, &MainWindow::action_dfs);
     connect(ui->actionIterative_deepening_search, &QAction::triggered, this, &MainWindow::action_ids);
     connect(ui->actionBest_first_search, &QAction::triggered, this, &MainWindow::action_best_fs);
+    connect(ui->actionA_search, &QAction::triggered, this, &MainWindow::action_a_star_search);
     connect(ui->btn_process, &QPushButton::clicked, this, &MainWindow::process_algorithm);
 }
 
@@ -66,6 +67,12 @@ void MainWindow::action_best_fs()
     alg_turn[3] = true;
 }
 
+void MainWindow::action_a_star_search()
+{
+    config_image();
+    alg_turn[4] = true;
+}
+
 void MainWindow::process_algorithm()
 {
     QString aux_x = ui->source_x->text();
@@ -84,6 +91,7 @@ void MainWindow::process_algorithm()
 
     Algorithm algorithm;
     cv::Point min_white_point;
+
     // Apply skeletonizing and thinning only to mazes.
     if(mazes_pick)
     {
@@ -163,6 +171,22 @@ void MainWindow::process_algorithm()
         }
     }
 
+    // A * search.
+    else if(alg_turn[4]) {
+        auto start = std::chrono::steady_clock::now();
+        algorithm.a_star_search(initial_state, final_state);
+        auto end = std::chrono::steady_clock::now();
+        diff = end - start;
+
+        if(algorithm.path_exist())
+        {
+            print_alg_info(algorithm.get_level(), algorithm.get_nodes_expanded(), diff);
+            algorithm.draw_path();
+        } else {
+            QMessageBox::critical(this, tr("NO SOLUTION"), tr("THERE IS NO SOLUTION"));
+        }
+    }
+
     // Reset values.
     windowInfo.pressed = 0;
     ui->dest_x->clear();
@@ -178,6 +202,7 @@ void MainWindow::process_algorithm()
     alg_turn[1] = false;
     alg_turn[2] = false;
     alg_turn[3] = false;
+    alg_turn[4] = false;
 }
 
 /** @brief Mouse click event from the mouse, given by opencv to get the image info.
