@@ -16,6 +16,7 @@ Using a maze <br>
 
 # Informed-Search-Algorithms
 - Best first search.
+- A* search.
 
 # How to use.
 The images should be black and white, you can use photoshop or any other software to convert it.
