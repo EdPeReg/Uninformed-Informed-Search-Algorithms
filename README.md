@@ -1,5 +1,5 @@
 # WARNING.
-<b> There could be some nasty bugs, still in development. :) .Iterative deepening depth first search is not recomended to use (for now) because memory problems. Your RAM will be crazy, don't let it to go up to 90% .</b>
+<b> There could be some nasty bugs, still in development. :) .Iterative deepening depth first search is not recomended to use (for now) because memory problems. Your RAM will be crazy, check your ram when run depth first search.</b>
 
 Some common algorithms apply it to images using opencv + QT.
 
@@ -17,6 +17,7 @@ Using a maze <br>
 # Informed-Search-Algorithms
 - Best first search.
 - A* search.
+- Dijkstra.
 
 # How to use.
 The images should be black and white, you can use photoshop or any other software to convert it.
