@@ -308,8 +308,7 @@ void Algorithm::a_star_search(cv::Point &initial_state, const cv::Point &final_s
         all_nodes.insert(all_nodes.end(), possible_states.begin(), possible_states.end());
         for(auto& state : possible_states)
         {
-            // If the state hasn't been visited yet.
-            if(visited.find(state->_point) == visited.end() and !out_bounds(state->_point) and is_white(state->_point))
+            if(!out_bounds(state->_point) and is_white(state->_point))
             {
                 double new_cost_neighbour = current_state.first->gCost + distance(current_state.first->_point, state->_point);
                 if(visited.find(state->_point) == visited.end() or new_cost_neighbour < state->gCost)
@@ -317,6 +316,54 @@ void Algorithm::a_star_search(cv::Point &initial_state, const cv::Point &final_s
                     state->gCost = new_cost_neighbour;
                     state->hCost = heuristic(state->_point, final_state);
                     total_distance = state->gCost + state->hCost;
+                    min_heap.push(pair_node_dist(std::move(state), total_distance));
+                    visited.insert(state->_point);
+                }
+            }
+        }
+    }
+}
+
+void Algorithm::dijkstra_search(cv::Point &initial_state, const cv::Point &final_state)
+{
+    double total_distance = 0.0;
+    Node *root = new Node(initial_state, nullptr, 0);
+    typedef std::pair<Node*, double> pair_node_dist;
+
+    // Our root has distance 0.
+    pair_node_dist node_dist(root, 0);
+    // Create a min heap.
+    std::priority_queue< pair_node_dist,
+                         std::vector<pair_node_dist>,
+                         CompareDistance > min_heap;
+
+    std::set< cv::Point, comparePoints > visited;
+    all_nodes.push_back(root);
+    min_heap.push(node_dist);
+
+    while(!min_heap.empty())
+    {
+        pair_node_dist current_state = min_heap.top();
+        min_heap.pop();
+        visited.insert(current_state.first->_point);
+
+        if(current_state.first->_point == final_state) {
+            path = current_state.first;
+            break;
+        }
+
+        std::deque<Node *> possible_states = expand_node(current_state.first);
+        all_nodes.insert(all_nodes.end(), possible_states.begin(), possible_states.end());
+        for(auto& state : possible_states)
+        {
+            // If the state hasn't been visited yet.
+            if(!out_bounds(state->_point) and is_white(state->_point))
+            {
+                double new_cost_neighbour = current_state.first->gCost + distance(current_state.first->_point, state->_point);
+                if(visited.find(state->_point) == visited.end() or new_cost_neighbour < state->gCost)
+                {
+                    state->gCost = new_cost_neighbour;
+                    total_distance = new_cost_neighbour;
                     min_heap.push(pair_node_dist(std::move(state), total_distance));
                     visited.insert(state->_point);
                 }
