@@ -105,6 +105,12 @@ public:
       * */
     void a_star_search(cv::Point& initial_state, const cv::Point& final_state);
 
+    /** @brief Algorithm to find the shortest path using heuristic and distance between two points. ???
+      * @param current_state Initial state.
+      * @param final_state The goal to reach.
+      * */
+    void dijkstra_search(cv::Point& initial_State, const cv::Point& final_state);
+
     /// Check if path exist.
     bool path_exist();
 

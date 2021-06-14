@@ -110,6 +110,7 @@
     </property>
     <addaction name="actionBest_first_search"/>
     <addaction name="actionA_search"/>
+    <addaction name="actionDijkstra"/>
    </widget>
    <addaction name="menuFiles"/>
    <addaction name="menuInformed"/>
@@ -138,6 +139,11 @@
   <action name="actionA_search">
    <property name="text">
     <string>A * search</string>
+   </property>
+  </action>
+  <action name="actionDijkstra">
+   <property name="text">
+    <string>Dijkstra</string>
    </property>
   </action>
  </widget>

@@ -36,6 +36,7 @@ private slots:
     void action_ids();
     void action_best_fs();
     void action_a_star_search();
+    void action_dijkstra_search();
     void process_algorithm();
     void on_set_source_clicked();
     void on_set_dest_clicked();
@@ -45,7 +46,7 @@ private:
     cv::Mat img, gray_img, bin_img, skel;
 
     QImage image;
-    bool alg_turn[5]; // Set which algorithm is running.
+    bool alg_turn[6]; // Set which algorithm is running.
     bool mazes_pick;
     bool figures_pick;
 
